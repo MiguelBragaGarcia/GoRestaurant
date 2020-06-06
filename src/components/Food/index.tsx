@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 
 import { FiEdit3, FiTrash } from 'react-icons/fi';
 
@@ -26,13 +26,13 @@ const Food: React.FC<IProps> = ({
 }: IProps) => {
   const [isAvailable, setIsAvailable] = useState(food.available);
 
-  async function toggleAvailable(): Promise<void> {
+  const toggleAvailable = useCallback(async () => {
     setIsAvailable(!isAvailable);
-  }
+  }, [isAvailable]);
 
-  function setEditingFood(): void {
-    handleEditFood(food);
-  }
+  const setEditingFood = useCallback(() => {
+    handleEditFood({ ...food, available: isAvailable });
+  }, [food, handleEditFood, isAvailable]);
 
   return (
     <Container available={isAvailable}>

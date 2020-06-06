@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 
 import Header from '../../components/Header';
 
@@ -34,55 +34,63 @@ const Dashboard: React.FC = () => {
     loadFoods();
   }, []);
 
-  async function handleAddFood(
-    food: Omit<IFoodPlate, 'id' | 'available'>,
-  ): Promise<void> {
-    try {
-      const response = await api.post<IFoodPlate>('/foods', {
+  const handleAddFood = useCallback(
+    async (food: Omit<IFoodPlate, 'id' | 'available'>) => {
+      try {
+        const response = await api.post<IFoodPlate>('/foods', {
+          ...food,
+          available: true,
+        });
+
+        const newfood = response.data;
+
+        setFoods([...foods, newfood]);
+      } catch (err) {
+        console.log(err);
+      }
+    },
+    [foods],
+  );
+
+  const handleUpdateFood = useCallback(
+    async (food: Omit<IFoodPlate, 'id' | 'available'>) => {
+      const response = await api.put<IFoodPlate>(`/foods/${editingFood.id}`, {
+        id: editingFood.id,
         ...food,
-        available: true,
+        available: editingFood.available,
       });
+      const updatedFood = response.data;
 
-      const newfood = response.data;
+      const foodsArray = foods.filter(teste => teste.id !== editingFood.id);
+      setFoods([...foodsArray, updatedFood]);
+    },
+    [editingFood.id, editingFood.available, foods],
+  );
 
-      setFoods([...foods, newfood]);
-    } catch (err) {
-      console.log(err);
-    }
-  }
+  const handleDeleteFood = useCallback(
+    async (id: number) => {
+      await api.delete(`/foods/${id}`);
 
-  async function handleUpdateFood(
-    food: Omit<IFoodPlate, 'id' | 'available'>,
-  ): Promise<void> {
-    const response = await api.put<IFoodPlate>(`/foods/${editingFood.id}`, {
-      id: editingFood.id,
-      ...food,
-      available: editingFood.available,
-    });
-    const updatedFood = response.data;
+      setFoods(foods.filter(food => food.id !== id));
+    },
+    [foods],
+  );
 
-    const foodsArray = foods.filter(teste => teste.id !== editingFood.id);
-    setFoods([...foodsArray, updatedFood]);
-  }
-
-  async function handleDeleteFood(id: number): Promise<void> {
-    await api.delete(`/foods/${id}`);
-
-    setFoods(foods.filter(food => food.id !== id));
-  }
-
-  function toggleModal(): void {
+  const toggleModal = useCallback(() => {
     setModalOpen(!modalOpen);
-  }
+  }, [setModalOpen, modalOpen]);
 
-  function toggleEditModal(): void {
+  const toggleEditModal = useCallback(() => {
     setEditModalOpen(!editModalOpen);
-  }
+  }, [editModalOpen, setEditModalOpen]);
 
-  function handleEditFood(food: IFoodPlate): void {
-    setEditingFood(food);
-    toggleEditModal();
-  }
+  const handleEditFood = useCallback(
+    (food: IFoodPlate) => {
+      setEditingFood(food);
+      toggleEditModal();
+    },
+    [toggleEditModal],
+  );
 
   return (
     <>
